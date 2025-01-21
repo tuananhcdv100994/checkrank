@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
+import random
+import time
 
 def check_keyword_rank(keyword, domain="bravigo.vn", max_pages=5):
     headers = {
@@ -13,12 +15,18 @@ def check_keyword_rank(keyword, domain="bravigo.vn", max_pages=5):
     for page in range(max_pages):
         start = page * 10
         response = requests.get(google_url.format(keyword, start), headers=headers)
+        
         if response.status_code != 200:
+            print(f"Error: {response.status_code}")
             break
 
         soup = BeautifulSoup(response.text, "html.parser")
         results = soup.find_all("div", class_="tF2Cxc")
         
+        if not results:
+            print(f"No results found for keyword: {keyword}")
+            break
+
         for index, result in enumerate(results, start=1 + page * 10):
             try:
                 result_link = result.find("a")["href"]
@@ -26,8 +34,12 @@ def check_keyword_rank(keyword, domain="bravigo.vn", max_pages=5):
                     rank = f"Top {index}"
                     link = result_link
                     return rank, link
-            except:
+            except Exception as e:
+                print(f"Error parsing result: {e}")
                 continue
+
+        # Để tránh bị chặn, thêm độ trễ giữa các yêu cầu
+        time.sleep(random.uniform(2, 5))  # Độ trễ ngẫu nhiên từ 2 đến 5 giây
 
     return rank, link
 
